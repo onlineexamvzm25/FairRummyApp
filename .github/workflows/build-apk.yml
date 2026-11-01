@@ -1,3 +1,4 @@
+
 name: Build Fair Rummy APK
 
 on:
@@ -21,6 +22,32 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.7'
+
+      - name: Validate Android Manifest XML
+        run: |
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+
+          path = "app/src/main/AndroidManifest.xml"
+
+          print("Checking:", path)
+
+          with open(path, "rb") as f:
+              content = f.read()
+
+          print("File size:", len(content))
+          print("First bytes:", repr(content[:100]))
+
+          try:
+              ET.fromstring(content)
+              print("SUCCESS: Manifest XML is valid.")
+          except ET.ParseError as e:
+              print("MANIFEST XML ERROR:", e)
+              raise
+          PY
+
+      - name: Diagnose Android Manifest Processing
+        run: gradle :app:processDebugMainManifest --stacktrace --info
 
       - name: Build Debug APK
         run: gradle assembleDebug
